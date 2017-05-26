@@ -1,0 +1,74 @@
+{% extends "layout.twig" %}
+
+{% block page_title %}Список - Arena Picks{% endblock %}
+{% block title %}Arena Picks / Список{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-12 col-xs-12">
+		<div class="table-responsive">
+			<table st-table="displayedCounterPicks" st-safe-src="counterPicks" class="table table-striped" ng-cloak>
+				<thead>
+					<tr>
+{% for col, label in columns %}
+						<th>
+							<a href="#" ng-click="setOrder('{{col}}')">{{label}}</a>
+							<span ng-show="orderByField == '{{col}}'">{% verbatim %}{{reverseSort ? '▼' : '▲'}}{% endverbatim %}</span>
+						</th>
+{% endfor %}
+					</tr>
+					<tr>
+						<th></th>
+						<th><input st-search="pick_string" class="form-control" placeholder="Герой противника..." type="text"/></th>
+						<th><input st-search="counter_pick_string" class="form-control" placeholder="Ваш герой..." type="text"/></th>
+						<th></th>
+					</tr>
+				</thead>
+{% verbatim %}
+				<tbody>
+					<tr ng-repeat="cp in displayedCounterPicks|orderBy:orderByField:reverseSort">
+						<td class="vert-align">{{cp.id}}</td>
+						<td><img ng-repeat="hero in cp.pick_heroes" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm" /></td>
+						<td><img ng-repeat="hero in cp.counter_pick_heroes" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm" /></td>
+						<td class="vert-align">{{cp.created_at}}</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="4" class="text-center">
+							<div st-pagination="" st-items-by-page="10" st-displayed-pages="15"></div>
+						</td>
+					</tr>
+				</tfoot>
+{% endverbatim %}
+			</table>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block angular_modules %}'smart-table'{% endblock %}
+
+{% block angular %}
+$scope.orderByField = '{{sort}}';
+$scope.reverseSort = {{reverse}};
+
+$http.get('/jw/api/v1/arena/counter-picks').success(function(data) {
+	$scope.counterPicks = data;
+});
+
+$scope.setOrder = function(column) {
+	if ($scope.orderByField != column) {
+		$scope.orderByField = column;
+		$scope.reverseSort = false;
+	}
+	else {
+		$scope.reverseSort = !$scope.reverseSort;
+	}
+};
+{% endblock %}
+
+{% block js %}
+{{ parent() }}
+<script src="/lib/smart-table/smart-table.min.js"></script>
+{% endblock %}

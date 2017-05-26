@@ -1,0 +1,121 @@
+{% extends "layout.twig" %}
+
+{% block page_title %}Добавление - Arena Picks{% endblock %}
+{% block title %}Arena Picks / Добавление{% endblock %}
+
+{% block content %}
+<div class="lbl">Выберите отряд противника:</div>
+
+{% verbatim %}
+<div class="row" ng-cloak>
+	<div class="col-md-6 col-xs-12">
+		<img ng-repeat="hero in heroes" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm img-hero-selectable{{hero.selected ? ' img-grayscale' : ''}}" ng-model="hero" ng-click="toggleEnemyHero(hero)" />
+	</div>
+</div>
+
+<div class="lbl">Выберите ваш отряд:</div>
+	
+<div class="row" ng-cloak>
+	<div class="col-md-6 col-xs-12">
+		<img ng-repeat="hero in heroesCopy" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm img-hero-selectable{{hero.selected ? ' img-grayscale' : ''}}" ng-model="hero" ng-click="toggleMyHero(hero)" />
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-3 col-xs-12">
+		<input type="password" class="form-control" ng-model="password" placeholder="Пароль" />
+	</div>
+</div>
+{% endverbatim %}
+
+{% verbatim %}
+<div class="row" ng-cloak>
+	<div class="col-md-6 col-xs-12">
+		<button type="button" class="btn btn-default" ng-disabled="loading || enemyHeroes.length < 5 || myHeroes.length < 5" ng-click="addCounterPick()">Добавить</button>
+	
+		<div class="msg" ng-show="showSuccess">Данные успешно добавлены.</div>
+		<div class="msg error" ng-show="postError">{{postError}}</div>
+	</div>
+</div>
+{% endverbatim %}
+{% endblock %}
+
+{% block angular %}
+$scope.enemyHeroes = [];
+$scope.myHeroes = [];
+$scope.showSuccess = false;
+$scope.postError = null;
+$scope.buttonDisabled = true;
+$scope.loading = false;
+
+$http.get('/jw/api/v1/heroes').success(function(data) {
+	$scope.heroes = data;
+	$scope.heroesCopy = angular.copy($scope.heroes);
+});
+
+$scope.toggleEnemyHero = function(hero) {
+	$scope.toggleHero($scope.enemyHeroes, hero);
+};
+
+$scope.toggleMyHero = function(hero) {
+	$scope.toggleHero($scope.myHeroes, hero);
+};
+
+$scope.toggleHero = function(arr, hero) {
+	if (!hero.selected) {
+		if (arr.length < 5) {
+			var index = arr.indexOf(hero);
+			if (index == -1) {
+				arr.push(hero);
+				hero.selected = true;
+			}
+		}
+	}
+	else {
+		var index = arr.indexOf(hero);
+		if (index != -1) {
+			arr.splice(index, 1);
+			hero.selected = false;
+		}
+	}
+};
+
+$scope.getIds = function(heroes) {
+	var ids = [];
+	for (index = 0; index < heroes.length; index++) {
+		var hero = heroes[index];
+		ids.push(hero.id);
+	}
+	
+	return ids.sort();
+};
+
+$scope.addCounterPick = function() {
+	$scope.postError = null;
+	$scope.showSuccess = false;
+	
+	$scope.loading = true;
+
+	var dataObj = {
+		enemy_heroes: $scope.getIds($scope.enemyHeroes),
+		my_heroes: $scope.getIds($scope.myHeroes),
+		password: $scope.password
+	};
+	
+	$http.post('/jw/api/v1/arena/counter-pick', dataObj).then(function(response) {
+		var data = response.data;
+		if (data.error) {
+			$scope.postError = data.message;
+		}
+		else {
+			$scope.showSuccess = true;
+		}
+		
+		$scope.loading = false;
+	}, function(response) {
+		$scope.postError = response.status + ' ' + response.statusText;
+		
+		$scope.loading = false;
+	});
+  };
+{% endblock %}

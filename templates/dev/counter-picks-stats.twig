@@ -1,0 +1,129 @@
+{% extends "layout.twig" %}
+
+{% block page_title %}Поиск - Arena Picks{% endblock %}
+{% block menu_arena_counter_picks_search_active %} class="active"{% endblock %}
+{% block title %}Arena Picks / Поиск{% endblock %}
+
+{% block content %}
+<h4>Выберите отряд противника:</h4>
+
+{% verbatim %}
+<div class="row">
+	<div class="col-md-6 col-xs-12">
+		<select class="form-control" ng-model="enemyHeroes[0]" ng-options="x.name for x in heroes" ng-change="updateUI()"></select>
+		<select class="form-control" ng-model="enemyHeroes[1]" ng-options="x.name for x in heroes" ng-change="updateUI()"></select>
+		<select class="form-control" ng-model="enemyHeroes[2]" ng-options="x.name for x in heroes" ng-change="updateUI()"></select>
+		<select class="form-control" ng-model="enemyHeroes[3]" ng-options="x.name for x in heroes" ng-change="updateUI()"></select>
+		<select class="form-control" ng-model="enemyHeroes[4]" ng-options="x.name for x in heroes" ng-change="updateUI()"></select>
+		
+		<h4 ng-show="error != null" class="error" ng-cloak>{{error}}</h4>
+		
+		<h4><button type="button" class="btn btn-default" ng-disabled="buttonDisabled" ng-click="getCounterPick()">Искать</button></h4>
+	
+		<div ng-show="showCounter" ng-cloak>
+			<h4>Отряд противника:</h4>
+		
+			<p>{{searchHeroes}}</p>
+			
+			<h4>Рекомендуемые отряды:</h4>
+	
+			<div ng-repeat="pick in counterPicks | orderBy:'counter_pick_string'">{{$index+1}}. {{pick.counter_pick_string}}</div>
+	
+			<div ng-show="showNotFound">Ничего не найдено.</div>
+		</div>
+	
+		<div ng-show="postError" class="error" ng-cloak>{{postError}}</div>
+	</div>
+</div>
+{% endverbatim %}
+{% endblock %}				
+
+{% block angular %}
+$scope.enemyHeroes = [null, null, null, null, null];
+$scope.showCounter = false;
+$scope.showNotFound = false;
+$scope.buttonDisabled = true;
+$scope.loading = false;
+
+$http.get('/jw/api/v1/heroes').success(function(data) {
+	$scope.heroes = data;  
+});
+
+$scope.updateUI = function() {
+	var valid = true;
+	$scope.error = null;
+
+	var bag = [];
+	for (index = 0; index < $scope.enemyHeroes.length; index++) {
+		var hero = $scope.enemyHeroes[index];
+		if (bag[hero.id] !== undefined) {
+			valid = false;
+			$scope.error = 'Герои в отряде должны быть уникальны!';
+			break;
+		}
+		else {
+			bag[hero.id] = 1;
+		}
+	}
+
+	if (valid) {
+		for (index = 0; index < $scope.enemyHeroes.length; index++) {
+			var filled = ($scope.enemyHeroes[index] != null);
+			if (!filled) {
+				valid = false;
+				break;
+			}
+		}
+	}
+
+	$scope.buttonDisabled = $scope.loading || !valid;
+};
+
+$scope.getIdString = function() {
+	var ids = [];
+	for (index = 0; index < $scope.enemyHeroes.length; index++) {
+		var hero = $scope.enemyHeroes[index];
+		ids.push(hero.id);
+	}
+	
+	return ids.sort().join('_');
+};
+
+$scope.getNameString = function() {
+	var names = [];
+	for (index = 0; index < $scope.enemyHeroes.length; index++) {
+		var hero = $scope.enemyHeroes[index];
+		names.push(hero.name);
+	}
+	
+	return names.sort().join(', ');
+};
+
+$scope.getCounterPick = function() {
+	var names = [];
+	
+	$scope.searchHeroes = $scope.getNameString();
+	
+	$scope.postError = null;
+	$scope.counterPicks = null;
+	$scope.showCounter = false;
+	$scope.showNotFound = false;
+
+	$scope.loading = true;
+	$scope.updateUI();
+	
+	$http.get('/jw/api/v1/arena/counter-picks/' + $scope.getIdString()).then(function(response) {
+		$scope.counterPicks = response.data;
+		$scope.showCounter = true;
+		$scope.showNotFound = ($scope.counterPicks.length == 0);
+		
+		$scope.loading = false;
+		$scope.updateUI();
+	}, function(response) {
+		$scope.postError = response.status + ' ' + response.statusText;
+		
+		$scope.loading = false;
+		$scope.updateUI();
+	});
+  };
+{% endblock %}

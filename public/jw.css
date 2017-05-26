@@ -1,0 +1,78 @@
+.container {
+	margin-bottom: 10px;
+}
+
+.form-control {
+	margin: 10px 0;
+}
+
+.error {
+	color: red;
+}
+
+h4 .label {
+	font-weight: normal;
+}
+
+.navbar {
+	margin-bottom: 10px;
+}
+
+.img-hero {
+	width: 64px;
+	height: 64px;
+	margin: 2px 4px 2px 0;
+	border-radius: 4px;
+}
+
+.img-hero-sm {
+	width: 48px;
+	height: 48px;
+}
+
+.img-hero-selectable {
+	cursor: pointer;
+}
+
+.img-grayscale {
+	-webkit-filter: grayscale(100%);
+	filter: grayscale(100%) alpha(opacity=50);
+    opacity: 0.5;
+}
+
+.logo {
+	width: 160px;
+}
+
+.table {
+	margin-bottom: 0;
+}
+
+.table > tbody > tr > td.vert-align {
+    vertical-align: middle;
+}
+
+.table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead >tr > td, .table > thead > tr > th {
+	padding: 4px;
+}
+
+.msg, .lbl {
+	margin: 5px 0;
+}
+
+.lbl {
+	font-weight: bolder;
+}
+
+.counter-pick {
+	margin-bottom: 4px;
+}
+
+.footer {
+	margin-top: 10px;
+	text-align: center;
+}
+
+.pagination {
+	margin-bottom: 0;
+}

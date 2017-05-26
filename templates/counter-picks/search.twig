@@ -1,0 +1,88 @@
+{% extends "layout.twig" %}
+
+{% block page_title %}Поиск - Arena Picks{% endblock %}
+{% block title %}Arena Picks / Поиск{% endblock %}
+
+{% block content %}
+<div class="lbl">Выберите отряд противника:</div>
+
+{% verbatim %}
+<div class="row" ng-cloak>
+	<div class="col-md-6 col-xs-12">
+		<img ng-repeat="hero in heroes" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm img-hero-selectable{{hero.selected ? ' img-grayscale' : ''}}" ng-model="hero" ng-click="toggleHero(hero)" />
+
+		<div ng-show="enemyHeroes.length == 5">
+			<div class="lbl">Рекомендуемые отряды:</div>
+	
+			<div ng-repeat="pick in counterPicks | orderBy:'counter_pick_string'" class="counter-pick">
+				<img ng-repeat="hero in pick.counter_pick_heroes" src="/codiad/workspace/jw/public/img/heroes/{{hero.id}}.jpg" title="{{hero.name}}" class="img-hero img-hero-sm" />
+			</div>
+	
+			<div ng-show="loading" class="msg">Загрузка...</div>
+			<div ng-show="counterPicks.length == 0" class="msg">Ничего не найдено.</div>
+		</div>
+	
+		<div ng-show="postError" class="msg error">{{postError}}</div>
+	</div>
+</div>
+{% endverbatim %}
+{% endblock %}				
+
+{% block angular %}
+$scope.enemyHeroes = [];
+
+$http.get('/jw/api/v1/heroes').success(function(data) {
+	$scope.heroes = data;
+});
+
+$scope.toggleHero = function(hero) {
+	var arr = $scope.enemyHeroes;
+	if (!hero.selected) {
+		if (arr.length < 5) {
+			var index = arr.indexOf(hero);
+			if (index == -1) {
+				arr.push(hero);
+				hero.selected = true;
+			}
+			
+			if (arr.length == 5) {
+				$scope.getCounterPick();
+			}
+		}
+	}
+	else {
+		var index = arr.indexOf(hero);
+		if (index != -1) {
+			arr.splice(index, 1);
+			hero.selected = false;
+		}
+	}
+};
+
+$scope.getIdString = function() {
+	var ids = [];
+	for (index = 0; index < $scope.enemyHeroes.length; index++) {
+		var hero = $scope.enemyHeroes[index];
+		ids.push(hero.id);
+	}
+	
+	return ids.sort().join('_');
+};
+
+$scope.getCounterPick = function() {
+	var names = [];
+
+	$scope.postError = null;
+	$scope.counterPicks = null;
+	
+	$scope.loading = true;
+
+	$http.get('/jw/api/v1/arena/counter-picks/' + $scope.getIdString()).then(function(response) {
+		$scope.counterPicks = response.data;
+		$scope.loading = false;
+	}, function(response) {
+		$scope.postError = response.status + ' ' + response.statusText;
+		$scope.loading = false;
+	});
+  };
+{% endblock %}
