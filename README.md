@@ -6,4 +6,4 @@ Based on PHP Slim Framework, Twig and AngularJS.
 
 http://warcry.ru/jw/secret/arena
 
-Discontinued.
+Discontinued + currently broken (october 2017).
